@@ -1,0 +1,28 @@
+class TodoList(models.Model):
+    todo_list_guid = models.CharField(primary_key=True, max_length=36)
+    todo_list_title = models.CharField(max_length=200, blank=True, null=True)
+    todo_list_desc = models.CharField(max_length=500, blank=True, null=True)
+    application_type_guid = models.ForeignKey('ApplicationType', db_column='application_type_guid', blank=True, null=True)
+    todo_list_json = jsonfield.JSONField()#models.TextField(blank=True, null=True)
+    created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    created_user_guid = models.ForeignKey('AuthUserSadc', db_column='created_user_guid', related_name='created_user_todolist', blank=True, null=True)
+    active_flg = models.NullBooleanField()
+
+    class Meta:
+        managed = False
+        db_table = 'todo_list'
+
+    def save(self, *args, **kwargs):
+        # Check if todo_list_json is string, if not, convert to text
+        #if not isinstance(self.todo_list_json, basestring):
+        #    print '>>>>>', type(self.todo_list_json)
+        #    self.todo_list_json = json.dumps(self.todo_list_json)
+
+        # If no guid on save, must be a new record.
+        print "Incoming TodoList:", self.todo_list_guid
+        if self.todo_list_guid == '':
+            logger.debug("Empty todo_list_guid during save")
+            self.todo_list_guid = str(uuid.uuid4())
+            self.active_flg = 1
+        super(TodoList, self).save(*args, **kwargs)
+        logger.debug("Todo List %s saved" % self.todo_list_title )
